@@ -2,7 +2,7 @@ import 'dart:core';
 
 import 'package:scan_desc/DAO/inventaire_dao.dart';
 
-enum EtatInventaire { perdu, entretien, dispo }
+enum EtatInventaire { perdu, maintenance, dispo }
 
 class Inventaire {
   int? id;

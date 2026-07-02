@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
 
 // 🔹 Provider du Model
@@ -61,6 +62,8 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
     });
   }
 }
+
+final searchProvider = StateProvider<String>((ref) => "");
 
 // 🔹 Provider principal
 final inventaireProvider =

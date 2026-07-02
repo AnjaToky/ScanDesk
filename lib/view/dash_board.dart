@@ -2,10 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
 import 'package:scan_desc/view/list_inventaire.dart';
+import 'package:scan_desc/view/widget/bottom_bar.dart';
 import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 String _formatDate(DateTime date) {
-  const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const months = [
+    'janvier',
+    'février',
+    'mars',
+    'avril',
+    'mai',
+    'juin',
+    'juillet',
+    'août',
+    'septembre',
+    'octobre',
+    'novembre',
+    'décembre',
+  ];
   return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
 
@@ -40,15 +54,21 @@ class DashBoard extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Erreur: $e')),
         data: (items) => _buildBody(items),
       ),
-      bottomNavigationBar: _BottomNav(currentIndex: 1),
+      bottomNavigationBar: BottomBar.buildBottom(context, ref),
     );
   }
 
   Widget _buildBody(List<Inventaire> items) {
     final total = items.length;
-    final dispo = items.where((i) => i.etatInventaire == EtatInventaire.dispo).length;
-    final entretien = items.where((i) => i.etatInventaire == EtatInventaire.entretien).length;
-    final perdu = items.where((i) => i.etatInventaire == EtatInventaire.perdu).length;
+    final dispo = items
+        .where((i) => i.etatInventaire == EtatInventaire.dispo)
+        .length;
+    final entretien = items
+        .where((i) => i.etatInventaire == EtatInventaire.maintenance)
+        .length;
+    final perdu = items
+        .where((i) => i.etatInventaire == EtatInventaire.perdu)
+        .length;
     final dernierScan = DateTime.now();
 
     return SingleChildScrollView(
@@ -102,11 +122,21 @@ class _ScanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Dernier scan', style: TextStyle(fontSize: 14, color: Colors.black54)),
-          const SizedBox(height: 4),  
+          const Text(
+            'Dernier scan',
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+          const SizedBox(height: 4),
           Text(
             _formatDate(date),
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, "/list-dispo");
+            },
+            child: Text("List dispo"),
           ),
         ],
       ),
@@ -119,7 +149,11 @@ class _StatCard extends StatelessWidget {
   final int value;
   final Color color;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -133,10 +167,21 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           Text(
             '$value',
-            style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -163,10 +208,16 @@ class _ActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Dernier activiter', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Dernier activiter',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           if (recent.isEmpty)
-            const Text('Aucune activité', style: TextStyle(color: Colors.black54))
+            const Text(
+              'Aucune activité',
+              style: TextStyle(color: Colors.black54),
+            )
           else
             ...recent.map(
               (item) => Padding(
@@ -203,12 +254,7 @@ class _BottomNav extends StatelessWidget {
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: ''),
-        BottomNavigationBarItem(icon: 
-        
-        
-        
-        
-        Icon(Icons.home), label: ''),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
         BottomNavigationBarItem(icon: Icon(Icons.list), label: ''),
       ],
     );

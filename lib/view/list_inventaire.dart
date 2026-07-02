@@ -30,7 +30,7 @@ class _ListInventaireState extends ConsumerState<ListInventaire> {
   Color _couleurEtat(EtatInventaire etat) {
     return switch (etat) {
       EtatInventaire.dispo => _green,
-      EtatInventaire.entretien => _orange,
+      EtatInventaire.maintenance => _orange,
       EtatInventaire.perdu => _red,
     };
   }
@@ -169,11 +169,11 @@ class _ListInventaireState extends ConsumerState<ListInventaire> {
               _FiltreEtatChip(
                 label: 'Maintenance',
                 color: _orange,
-                selected: _filtreEtat == EtatInventaire.entretien,
+                selected: _filtreEtat == EtatInventaire.maintenance,
                 onTap: () => setState(() {
-                  _filtreEtat = _filtreEtat == EtatInventaire.entretien
+                  _filtreEtat = _filtreEtat == EtatInventaire.maintenance
                       ? null
-                      : EtatInventaire.entretien;
+                      : EtatInventaire.maintenance;
                 }),
               ),
               const SizedBox(width: 8),
@@ -227,7 +227,7 @@ class _ListInventaireState extends ConsumerState<ListInventaire> {
                     child: Text('Disponible'),
                   ),
                   DropdownMenuItem(
-                    value: EtatInventaire.entretien,
+                    value: EtatInventaire.maintenance,
                     child: Text('Maintenance'),
                   ),
                   DropdownMenuItem(
