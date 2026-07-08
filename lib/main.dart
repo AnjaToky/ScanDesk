@@ -32,7 +32,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2D62ED)),
       ),
       home: const SplashScreen(),
-
       routes: {
         "/list-dispo": (context) => ListDispo(),
         "/list-tout": (context) => ListTout(),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/view/colors/couleur.dart';
+import 'package:scan_desc/view/widget/app_nav_bar.dart';
 import 'package:scan_desc/view/widget/bottom_bar.dart';
 import 'package:scan_desc/view/widget/button_etat.dart';
 import 'package:scan_desc/view/widget/container_list.dart';
+import 'package:scan_desc/view/widget/dialog_ajout.dart';
+import 'package:scan_desc/view/widget/search_barr.dart';
 import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 class ListTout extends ConsumerWidget {
@@ -16,12 +19,7 @@ class ListTout extends ConsumerWidget {
     ButtonEtat buttonEtat = ButtonEtat();
     ContainerList containerList = ContainerList();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "ScanDesc",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: AppNavBar.appBar(),
 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -30,13 +28,9 @@ class ListTout extends ConsumerWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: SearchBar(
-                hintText: "Rechercher...",
-                onChanged: (value) {
-                  ref.read(searchProvider.notifier).state = value;
-                },
-                leading: const Icon(Icons.search),
-              ),
+              child: SearchBarr.searchBar((value) {
+                ref.read(searchProvider.notifier).state = value;
+              }),
             ),
             buttonEtat.buildButton(context, ref),
 
@@ -79,9 +73,7 @@ class ListTout extends ConsumerWidget {
                                     context,
                                     touts.name,
                                     touts.description,
-                                    ContainerList.couleurEtat(
-                                      touts.etatInventaire,
-                                    ),
+                                    Couleur.couleurEtat(touts.etatInventaire),
                                   );
                                 },
                               ),
@@ -95,6 +87,13 @@ class ListTout extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Couleur.primaire,
+
+        onPressed: () => DialogAjout.showAjouterDialog(context, ref),
+        child: Icon(Icons.add),
       ),
 
       bottomNavigationBar: BottomBar.buildBottom(context, ref),

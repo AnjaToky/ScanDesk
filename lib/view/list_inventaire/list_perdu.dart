@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
 import 'package:scan_desc/view/colors/couleur.dart';
+import 'package:scan_desc/view/widget/app_nav_bar.dart';
 import 'package:scan_desc/view/widget/bottom_bar.dart';
 import 'package:scan_desc/view/widget/button_etat.dart';
 import 'package:scan_desc/view/widget/container_list.dart';
+import 'package:scan_desc/view/widget/search_barr.dart';
 import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 class ListPerdu extends ConsumerWidget {
@@ -13,30 +15,45 @@ class ListPerdu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final perduAsync = ref.watch(inventaireProvider);
+    final recherche = ref.watch(searchProvider);
     ButtonEtat buttonEtat = ButtonEtat();
     ContainerList containerList = ContainerList();
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "ScanDesc",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Couleur.primaire,
-      ),
+      appBar: AppNavBar.appBar(),
 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(padding: const EdgeInsets.all(8.0), child: SearchBar()),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SearchBarr.searchBar(
+                (value) => ref.read(searchProvider.notifier).state = value,
+              ),
+            ),
             buttonEtat.buildButton(context, ref),
 
             perduAsync.when(
               data: (perdu) {
-                final listPerdu = perdu
-                    .where((m) => m.etatInventaire == EtatInventaire.perdu)
-                    .toList();
+                final listPerdu;
+                if (recherche.isEmpty) {
+                  listPerdu = perdu
+                      .where((m) => m.etatInventaire == EtatInventaire.perdu)
+                      .toList();
+                } else {
+                  listPerdu = perdu
+                      .where(
+                        (e) =>
+                            e.name.toLowerCase().contains(
+                              recherche.toLowerCase(),
+                            ) ||
+                            e.description.toLowerCase().contains(
+                              recherche.toLowerCase(),
+                            ),
+                      )
+                      .toList();
+                }
 
                 return Expanded(
                   child: Column(
@@ -65,7 +82,7 @@ class ListPerdu extends ConsumerWidget {
                               context,
                               perdue.name,
                               perdue.description,
-                              Couleur.erreur,
+                              Couleur.couleurEtat(perdue.etatInventaire),
                             );
                           },
                         ),

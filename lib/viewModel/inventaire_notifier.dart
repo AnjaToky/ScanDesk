@@ -16,15 +16,17 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
   }
 
   // ➕ Ajouter
-  Future<void> ajouter(Inventaire inventaire) async {
+  Future<int> ajouter(Inventaire inventaire) async {
     final model = ref.read(inventaireModel);
 
     state = const AsyncLoading();
 
+    int insertedId = 0;
     state = await AsyncValue.guard(() async {
-      await model.ajouterInventaire(inventaire);
+      insertedId = await model.ajouterInventaire(inventaire);
       return model.afficherInventaire();
     });
+    return insertedId;
   }
 
   // ✏️ Modifier
@@ -32,7 +34,6 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
     final model = ref.read(inventaireModel);
 
     state = const AsyncLoading();
-
     state = await AsyncValue.guard(() async {
       await model.editeInventaire(inventaire);
       return model.afficherInventaire();
