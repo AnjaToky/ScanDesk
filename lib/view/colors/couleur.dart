@@ -16,6 +16,7 @@ class Couleur {
       EtatInventaire.dispo => Couleur.succes,
       EtatInventaire.maintenance => Couleur.alerte,
       EtatInventaire.perdu => Couleur.erreur,
+      EtatInventaire.emprunter => const Color.fromARGB(255, 100, 123, 141),
     };
   }
 }

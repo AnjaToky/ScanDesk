@@ -76,6 +76,14 @@ class ButtonEtat {
               ref.read(inventaireProvider.notifier).refresh();
             },
           ),
+
+          buildItem(
+            '/emprunt',
+            'Emprunt',
+            onTap: () {
+              ref.read(inventaireProvider.notifier).refresh();
+            },
+          ),
         ],
       ),
     );

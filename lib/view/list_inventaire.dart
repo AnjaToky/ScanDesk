@@ -32,6 +32,7 @@ class _ListInventaireState extends ConsumerState<ListInventaire> {
       EtatInventaire.dispo => _green,
       EtatInventaire.maintenance => _orange,
       EtatInventaire.perdu => _red,
+      EtatInventaire.emprunter => const Color.fromARGB(255, 100, 123, 141),
     };
   }
 

@@ -2,7 +2,7 @@ import 'dart:core';
 
 import 'package:scan_desc/DAO/inventaire_dao.dart';
 
-enum EtatInventaire { perdu, maintenance, dispo }
+enum EtatInventaire { perdu, maintenance, dispo, emprunter}
 
 class Inventaire {
   int? id;
@@ -44,10 +44,13 @@ class Inventairemodel {
 
   Future<int> ajouterInventaire(Inventaire inventaire) async =>
       inventaireDao.ajouterInventaire(inventaire);
+
   Future<int> editeInventaire(Inventaire inventaire) async =>
       inventaireDao.editeInventaire(inventaire);
+
   Future<int> supprimerInventaire(int id) async =>
       inventaireDao.supprimerInventaire(id);
+
   Future<List<Inventaire>> afficherInventaire() async =>
       inventaireDao.afficherInventaire();
 }

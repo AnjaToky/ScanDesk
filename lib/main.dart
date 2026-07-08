@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/view/dash_board.dart';
+import 'package:scan_desc/view/emprunt/emprunt_page.dart';
+import 'package:scan_desc/view/personne/personne_page.dart';
 import 'package:scan_desc/view/list_inventaire/list_dispo.dart';
 import 'package:scan_desc/view/list_inventaire/list_maintenance.dart';
 import 'package:scan_desc/view/list_inventaire/list_perdu.dart';
@@ -22,7 +24,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-                                                                                                                                                              
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -39,6 +41,8 @@ class MyApp extends StatelessWidget {
         "/list-perdu": (context) => ListPerdu(),
         "/dash-board": (context) => DashBoard(),
         "/scan-screen": (context) => ScannerScreen(),
+        "/emprunt": (context) => EmpruntPage(),
+        "/personne": (context) => PersonnePage(),
       },
     );
   }

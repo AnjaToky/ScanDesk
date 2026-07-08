@@ -87,6 +87,9 @@ class ListDispo extends ConsumerWidget {
                               Couleur.couleurEtat(
                                 disponible.etatInventaire,
                               ),
+                              inventaire: disponible,
+                              ref: ref
+
                             );
                           },
                         ),

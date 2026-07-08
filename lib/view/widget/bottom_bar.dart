@@ -31,6 +31,7 @@ class BottomBar {
             buildItem("/scan-screen", Icon(Icons.qr_code_scanner)),
             buildItem("/dash-board", Icon(Icons.home)),
             buildItem("/list-tout", Icon(Icons.list)),
+            buildItem("/personne", Icon(Icons.person))
           ],
         ),
       ),
