@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scan_desc/DAO/personne_firestore_dao.dart';
 import 'package:scan_desc/model/personne_model.dart';
 
 final personneModel = Provider<PersonneModel>((ref) => PersonneModel());
+
+final _firestoreDao = PersonneFirestoreDao();
 
 class PersonneNotifier extends AsyncNotifier<List<Personne>> {
   @override
@@ -12,10 +15,10 @@ class PersonneNotifier extends AsyncNotifier<List<Personne>> {
 
   Future<void> ajouterPersonne(Personne personne) async {
     final model = ref.read(personneModel);
-
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await model.ajouterPersonne(personne);
+      _firestoreDao.ajouter(personne).ignore();
       return model.afficherPersonne();
     });
   }

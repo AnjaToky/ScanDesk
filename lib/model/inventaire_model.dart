@@ -26,6 +26,15 @@ class Inventaire {
     };
   }
 
+  Inventaire copyWith({int? id}) {
+    return Inventaire(
+      id: id ?? this.id,
+      name: name,
+      description: description,
+      etatInventaire: etatInventaire,
+    );
+  }
+
   factory Inventaire.fromJson(Map<String, dynamic> json) {
     return Inventaire(
       id: json['id'] as int,

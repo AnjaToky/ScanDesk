@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/model/emprunter_model.dart';
+import 'package:scan_desc/view/widget/app_nav_bar.dart';
 import 'package:scan_desc/view/widget/bottom_bar.dart';
 import 'package:scan_desc/viewModel/emprunt_notifier.dart';
 
@@ -19,7 +20,7 @@ class EmpruntPage extends ConsumerWidget {
     final empruntsAsync = ref.watch(empruntDetailProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Emprunts')),
+      appBar: AppNavBar.appBar(),
       body: empruntsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erreur: $e')),
@@ -36,7 +37,7 @@ class EmpruntPage extends ConsumerWidget {
                 emprunt: e,
                 formatDate: _formatDate,
                 onSupprimer: () =>
-                    ref.read(empruntProvider.notifier).supprimerPersonne(e.id),
+                    ref.read(empruntProvider.notifier).supprimerEmprunt(e.id),
               );
             },
           );

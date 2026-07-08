@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scan_desc/DAO/emprunt_firestore_dao.dart';
 import 'package:scan_desc/model/emprunter_model.dart';
 
 final empruntModel = Provider<EmprunterModel>((ref) => EmprunterModel());
+
+final _firestoreDao = EmpruntFirestoreDao();
 
 class EmpruntNotifier extends AsyncNotifier<List<Emprunter>> {
   @override
@@ -10,28 +13,17 @@ class EmpruntNotifier extends AsyncNotifier<List<Emprunter>> {
     return model.afficherEmprunt();
   }
 
-  Future<void> ajouterEmprunt(Emprunter emprunt) async {
+  Future<void> ajouterEmprunt(Emprunter emprunt, EmpruntDetail detail) async {
     final model = ref.read(empruntModel);
-
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await model.ajouterEmprunt(emprunt);
+      _firestoreDao.ajouter(detail).ignore();
       return model.afficherEmprunt();
     });
   }
 
-  Future<void> ajouterPersonne(Emprunter emprunt) => ajouterEmprunt(emprunt);
-
-  Future<void> editePersonne(Emprunter emprunt) async {
-    final model = ref.read(empruntModel);
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await model.editeEmprunt(emprunt);
-      return model.afficherEmprunt();
-    });
-  }
-
-  Future<void> supprimerPersonne(int id) async {
+  Future<void> supprimerEmprunt(int id) async {
     final model = ref.read(empruntModel);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -40,7 +32,7 @@ class EmpruntNotifier extends AsyncNotifier<List<Emprunter>> {
     });
   }
 
-  Future<void> actualisePersonne() async {
+  Future<void> actualiser() async {
     final model = ref.read(empruntModel);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
@@ -54,7 +46,6 @@ final empruntProvider =
       EmpruntNotifier.new,
     );
 
-// Se rafraîchit automatiquement quand empruntProvider change
 final empruntDetailProvider = FutureProvider<List<EmpruntDetail>>((ref) async {
   ref.watch(empruntProvider);
   final model = ref.read(empruntModel);

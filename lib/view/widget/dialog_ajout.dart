@@ -7,134 +7,368 @@ import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 class DialogAjout {
   static void showAjouterDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    EtatInventaire etat = EtatInventaire.dispo;
-    int quantite = 1;
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Ajouter un matériel'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
-              ),
-              TextField(
-                controller: descCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Description / Salle',
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _AjoutSheet(ref: ref, parentContext: context),
+    );
+  }
+}
+
+class _AjoutSheet extends StatefulWidget {
+  final WidgetRef ref;
+  final BuildContext parentContext;
+  const _AjoutSheet({required this.ref, required this.parentContext});
+
+  @override
+  State<_AjoutSheet> createState() => _AjoutSheetState();
+}
+
+class _AjoutSheetState extends State<_AjoutSheet> {
+  final _nameCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  EtatInventaire _etat = EtatInventaire.dispo;
+  int _quantite = 1;
+  bool _loading = false;
+
+  final _etatOptions = [
+    (value: EtatInventaire.dispo,       label: 'Disponible',  color: Couleur.succes),
+    (value: EtatInventaire.maintenance, label: 'Maintenance', color: Couleur.alerte),
+    (value: EtatInventaire.perdu,       label: 'Perdu',       color: Couleur.erreur),
+    (value: EtatInventaire.emprunter,   label: 'Emprunté',    color: Color(0xFF6366F1)),
+  ];
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_nameCtrl.text.trim().isEmpty) return;
+
+    setState(() => _loading = true);
+
+    final name = _nameCtrl.text.trim();
+    final desc = _descCtrl.text.trim();
+    final etat = _etat;
+    final quantite = _quantite;
+
+    Navigator.pop(context);
+
+    final id = await widget.ref
+        .read(inventaireProvider.notifier)
+        .ajouter(Inventaire(name: name, description: desc, etatInventaire: etat));
+
+    if (widget.parentContext.mounted) {
+      Navigator.push(
+        widget.parentContext,
+        MaterialPageRoute(
+          builder: (_) => QrCodeListView(
+            inventaire: Inventaire(
+              id: id,
+              name: name,
+              description: desc,
+              etatInventaire: etat,
+            ),
+            quantite: quantite,
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: bottom),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag indicator
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFCBD5E1),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Couleur.primaire.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.add_box_outlined,
+                    color: Couleur.primaire,
+                    size: 22,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<EtatInventaire>(
-                initialValue: etat,
-                decoration: const InputDecoration(labelText: 'État'),
-                items: const [
-                  DropdownMenuItem(
-                    value: EtatInventaire.dispo,
-                    child: Text('Disponible'),
-                  ),
-                  DropdownMenuItem(
-                    value: EtatInventaire.maintenance,
-                    child: Text('Maintenance'),
-                  ),
-                  DropdownMenuItem(
-                    value: EtatInventaire.perdu,
-                    child: Text('Perdu'),
-                  ),
-                ],
-                onChanged: (v) => setDialogState(() => etat = v!),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Nombre de QR codes',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: quantite > 1
-                            ? () => setDialogState(() => quantite--)
-                            : null,
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nouveau matériel',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Couleur.textPrimaire,
                       ),
-                      Text(
-                        '$quantite',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    ),
+                    Text(
+                      'Remplissez les informations',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Nom
+                _InputField(
+                  controller: _nameCtrl,
+                  label: 'Nom du matériel',
+                  icon: Icons.inventory_2_outlined,
+                ),
+                const SizedBox(height: 12),
+
+                // Description
+                _InputField(
+                  controller: _descCtrl,
+                  label: 'Salle / Description',
+                  icon: Icons.location_on_outlined,
+                ),
+                const SizedBox(height: 20),
+
+                // Etat
+                const Text(
+                  'État',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _etatOptions.map((opt) {
+                    final isSelected = _etat == opt.value;
+                    return GestureDetector(
+                      onTap: () => setState(() => _etat = opt.value),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? opt.color
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? opt.color : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Text(
+                          opt.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : const Color(0xFF64748B),
+                          ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () => setDialogState(() => quantite++),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Nombre de QR codes
+                const Text(
+                  'Nombre de QR codes',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _QrButton(
+                        icon: Icons.remove,
+                        onPressed: _quantite > 1
+                            ? () => setState(() => _quantite--)
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          '$_quantite',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Couleur.textPrimaire,
+                          ),
+                        ),
+                      ),
+                      _QrButton(
+                        icon: Icons.add,
+                        onPressed: () => setState(() => _quantite++),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Couleur.primaire,
-              ),
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty) return;
+                ),
 
-                final name = nameCtrl.text.trim();
-                final desc = descCtrl.text.trim();
-                final etatFinal = etat;
-                final quantiteFinal = quantite;
+                const SizedBox(height: 24),
 
-                Navigator.pop(ctx);
-
-                final id = await ref
-                    .read(inventaireProvider.notifier)
-                    .ajouter(
-                      Inventaire(
-                        name: name,
-                        description: desc,
-                        etatInventaire: etatFinal,
+                // Bouton Ajouter
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Couleur.primaire,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-
-                if (context.mounted) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QrCodeListView(
-                        inventaire: Inventaire(
-                          id: id,
-                          name: name,
-                          description: desc,
-                          etatInventaire: etatFinal,
-                        ),
-                        quantite: quantiteFinal,
-                      ),
+                      elevation: 0,
                     ),
-                  );
-                }
-              },
-              child: const Text(
-                'Ajouter',
-                style: TextStyle(color: Couleur.textSecondaire),
-              ),
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.qr_code, color: Colors.white, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Ajouter et générer QR',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+
+  const _InputField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+        prefixIcon: Icon(icon, size: 18, color: const Color(0xFFADB5BD)),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Couleur.primaire, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+}
+
+class _QrButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  const _QrButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: onPressed != null
+              ? Couleur.primaire.withValues(alpha: 0.1)
+              : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: onPressed != null ? Couleur.primaire : const Color(0xFFCBD5E1),
         ),
       ),
     );

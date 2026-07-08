@@ -104,14 +104,24 @@ class _EmpruntDialogState extends ConsumerState<EmpruntDialog> {
           onPressed: _personneSelectionnee == null
               ? null
               : () {
-                  ref.read(empruntProvider.notifier).ajouterEmprunt(
-                    Emprunter(
-                      idInventaire: widget.inventaire.id!,
-                      idPersonne: _personneSelectionnee!.id,
-                      dateEmprunt: _dateEmprunt,
-                      dateRemise: _dateRemise,
-                    ),
+                  final emprunt = Emprunter(
+                    idInventaire: widget.inventaire.id!,
+                    idPersonne: _personneSelectionnee!.id,
+                    dateEmprunt: _dateEmprunt,
+                    dateRemise: _dateRemise,
                   );
+                  final detail = EmpruntDetail(
+                    id: 0,
+                    idInventaire: widget.inventaire.id!,
+                    nomInventaire: widget.inventaire.name,
+                    idPersonne: _personneSelectionnee!.id,
+                    nomPersonne: _personneSelectionnee!.name,
+                    dateEmprunt: _dateEmprunt,
+                    dateRemise: _dateRemise,
+                  );
+                  ref
+                      .read(empruntProvider.notifier)
+                      .ajouterEmprunt(emprunt, detail);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
