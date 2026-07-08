@@ -17,8 +17,8 @@ class EmpruntNotifier extends AsyncNotifier<List<Emprunter>> {
     final model = ref.read(empruntModel);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await model.ajouterEmprunt(emprunt);
-      _firestoreDao.ajouter(detail).ignore();
+      final insertedId = await model.ajouterEmprunt(emprunt);
+      _firestoreDao.ajouter(insertedId, detail).ignore();
       return model.afficherEmprunt();
     });
   }

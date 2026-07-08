@@ -17,8 +17,10 @@ class PersonneNotifier extends AsyncNotifier<List<Personne>> {
     final model = ref.read(personneModel);
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await model.ajouterPersonne(personne);
-      _firestoreDao.ajouter(personne).ignore();
+      final insertedId = await model.ajouterPersonne(personne);
+      _firestoreDao
+          .ajouter(Personne(id: insertedId, name: personne.name))
+          .ignore();
       return model.afficherPersonne();
     });
   }

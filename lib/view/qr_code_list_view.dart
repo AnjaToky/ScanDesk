@@ -10,23 +10,16 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
 
 class QrCodeListView extends StatelessWidget {
-  final Inventaire inventaire;
-  final int quantite;
+  final List<Inventaire> inventaires;
 
-  const QrCodeListView({
-    super.key,
-    required this.inventaire,
-    required this.quantite,
-  });
+  const QrCodeListView({super.key, required this.inventaires});
 
-  String _buildData(int unite) {
+  String _buildData(Inventaire inv) {
     return jsonEncode({
-      'id': inventaire.id,
-      'name': inventaire.name,
-      'description': inventaire.description,
-      'etat': inventaire.etatInventaire.name,
-      'unite': unite,
-      'total': quantite,
+      'id': inv.id,
+      'name': inv.name,
+      'description': inv.description,
+      'etat': inv.etatInventaire.name,
     });
   }
 
@@ -35,8 +28,14 @@ class QrCodeListView extends StatelessWidget {
       data: data,
       version: QrVersions.auto,
       gapless: false,
-      color: const Color(0xFF000000),
-      emptyColor: const Color(0xFFFFFFFF),
+      eyeStyle: const QrEyeStyle(
+        eyeShape: QrEyeShape.square,
+        color: Color(0xFF000000),
+      ),
+      dataModuleStyle: const QrDataModuleStyle(
+        dataModuleShape: QrDataModuleShape.square,
+        color: Color(0xFF000000),
+      ),
     );
     final imageData = await painter.toImageData(
       300,
@@ -49,15 +48,17 @@ class QrCodeListView extends StatelessWidget {
     try {
       final doc = pw.Document();
       const perPage = 2;
-      final pages = (quantite / perPage).ceil();
+      final total = inventaires.length;
+      final pages = (total / perPage).ceil();
 
       for (int page = 0; page < pages; page++) {
         final start = page * perPage;
-        final end = (start + perPage).clamp(0, quantite);
+        final end = (start + perPage).clamp(0, total);
 
         final List<pw.Widget> cards = [];
         for (int i = start; i < end; i++) {
-          final bytes = await _qrToBytes(_buildData(i + 1));
+          final inv = inventaires[i];
+          final bytes = await _qrToBytes(_buildData(inv));
           cards.add(
             pw.Container(
               margin: const pw.EdgeInsets.only(bottom: 24),
@@ -70,7 +71,7 @@ class QrCodeListView extends StatelessWidget {
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   pw.Text(
-                    '${inventaire.name}  —  Unité ${i + 1} / $quantite',
+                    '${inv.name}  (${i + 1} / $total)',
                     style: pw.TextStyle(
                       fontSize: 14,
                       fontWeight: pw.FontWeight.bold,
@@ -78,7 +79,7 @@ class QrCodeListView extends StatelessWidget {
                   ),
                   pw.SizedBox(height: 6),
                   pw.Text(
-                    inventaire.description,
+                    inv.description,
                     style: const pw.TextStyle(
                       fontSize: 11,
                       color: PdfColors.grey700,
@@ -88,7 +89,7 @@ class QrCodeListView extends StatelessWidget {
                   pw.Image(pw.MemoryImage(bytes), width: 180, height: 180),
                   pw.SizedBox(height: 6),
                   pw.Text(
-                    'ID: ${inventaire.id}',
+                    'ID: ${inv.id}',
                     style: const pw.TextStyle(
                       fontSize: 10,
                       color: PdfColors.grey600,
@@ -110,9 +111,12 @@ class QrCodeListView extends StatelessWidget {
       }
 
       final bytes = await doc.save();
+      final baseName = inventaires.isNotEmpty
+          ? inventaires.first.name.replaceAll(RegExp(r'\s+\d+$'), '')
+          : 'qrcodes';
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'qrcodes_${inventaire.name}.pdf',
+        filename: 'qrcodes_$baseName.pdf',
       );
     } catch (e) {
       if (context.mounted) {
@@ -125,9 +129,14 @@ class QrCodeListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final total = inventaires.length;
+    final baseName = total > 0
+        ? inventaires.first.name.replaceAll(RegExp(r'\s+\d+$'), '')
+        : 'QR Codes';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('QR Codes — ${inventaire.name}'),
+        title: Text('QR Codes — $baseName ($total)'),
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf),
@@ -138,8 +147,9 @@ class QrCodeListView extends StatelessWidget {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: quantite,
+        itemCount: total,
         itemBuilder: (context, index) {
+          final inv = inventaires[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 20),
             child: Padding(
@@ -147,7 +157,7 @@ class QrCodeListView extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Unité ${index + 1} / $quantite',
+                    '${index + 1} / $total',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -155,22 +165,22 @@ class QrCodeListView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   QrImageView(
-                    data: _buildData(index + 1),
+                    data: _buildData(inv),
                     version: QrVersions.auto,
                     size: 200,
                     backgroundColor: Colors.white,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    inventaire.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    inv.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
                   Text(
-                    inventaire.description,
+                    inv.description,
                     style: const TextStyle(color: Colors.grey),
                   ),
                   Text(
-                    'ID: ${inventaire.id}',
+                    'ID: ${inv.id}',
                     style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],

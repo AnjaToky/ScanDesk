@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/firebase_options.dart';
+import 'package:scan_desc/service/sync_service.dart';
 import 'package:scan_desc/view/colors/couleur.dart';
 import 'package:scan_desc/view/dash_board.dart';
 import 'package:scan_desc/view/emprunt/emprunt_page.dart';
@@ -27,6 +28,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await SyncService.instance.syncFromFirestore();
 
   runApp(const ProviderScope(child: MyApp()));
 }

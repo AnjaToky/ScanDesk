@@ -58,23 +58,26 @@ class _AjoutSheetState extends State<_AjoutSheet> {
 
     Navigator.pop(context);
 
-    final id = await widget.ref
-        .read(inventaireProvider.notifier)
-        .ajouter(Inventaire(name: name, description: desc, etatInventaire: etat));
+    // Insere quantite inventaires separes : "dell 1", "dell 2", ..., "dell 10"
+    final List<Inventaire> inventaires = [];
+    for (int i = 1; i <= quantite; i++) {
+      final itemName = quantite == 1 ? name : '$name $i';
+      final id = await widget.ref
+          .read(inventaireProvider.notifier)
+          .ajouter(Inventaire(name: itemName, description: desc, etatInventaire: etat));
+      inventaires.add(Inventaire(
+        id: id,
+        name: itemName,
+        description: desc,
+        etatInventaire: etat,
+      ));
+    }
 
     if (widget.parentContext.mounted) {
       Navigator.push(
         widget.parentContext,
         MaterialPageRoute(
-          builder: (_) => QrCodeListView(
-            inventaire: Inventaire(
-              id: id,
-              name: name,
-              description: desc,
-              etatInventaire: etat,
-            ),
-            quantite: quantite,
-          ),
+          builder: (_) => QrCodeListView(inventaires: inventaires),
         ),
       );
     }
