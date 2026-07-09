@@ -36,8 +36,9 @@ class EmpruntPage extends ConsumerWidget {
               return _EmpruntCard(
                 emprunt: e,
                 formatDate: _formatDate,
-                onSupprimer: () =>
-                    ref.read(empruntProvider.notifier).supprimerEmprunt(e.id),
+                onSupprimer: () => ref
+                    .read(empruntProvider.notifier)
+                    .supprimerEmprunt(e.id, e.idInventaire),
               );
             },
           );
@@ -61,9 +62,14 @@ class _EmpruntCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final couleur = emprunt.estRetourne ? Colors.green[100]! : Colors.orange[100]!;
-    final badge = emprunt.estRetourne ? 'Retourné' : 'En cours';
-    final badgeCouleur = emprunt.estRetourne ? Colors.green : Colors.orange;
+    final enRetard = emprunt.estEnRetard;
+    final couleur = enRetard
+        ? Colors.red[50]!
+        : (emprunt.estRetourne ? Colors.green[100]! : Colors.orange[100]!);
+    final badge = enRetard ? 'En retard' : (emprunt.estRetourne ? 'Retourné' : 'En cours');
+    final badgeCouleur = enRetard
+        ? Colors.red
+        : (emprunt.estRetourne ? Colors.green : Colors.orange);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

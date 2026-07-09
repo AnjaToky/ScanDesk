@@ -74,6 +74,8 @@ class ListTout extends ConsumerWidget {
                                     touts.name,
                                     touts.description,
                                     Couleur.couleurEtat(touts.etatInventaire),
+                                    inventaire: touts,
+                                    ref: ref,
                                   );
                                 },
                               ),

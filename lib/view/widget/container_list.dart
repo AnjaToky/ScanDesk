@@ -104,7 +104,9 @@ class ContainerList {
                         ],
                       ),
                     ),
-                    if (inventaire != null && ref != null)
+                    if (inventaire != null &&
+                        ref != null &&
+                        inventaire.etatInventaire == EtatInventaire.dispo)
                       IconButton(
                         icon: Icon(
                           Icons.person_add_alt_1,

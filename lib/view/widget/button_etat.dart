@@ -7,11 +7,19 @@ class ButtonEtat {
     final currentRoute = ModalRoute.of(context)?.settings.name;
 
     final tabs = [
-      (route: '/list-tout',         label: 'Tout',        icon: Icons.apps_rounded),
-      (route: '/list-dispo',        label: 'Dispo',       icon: Icons.check_circle_outline),
-      (route: '/list-maintenance',  label: 'Maintenance', icon: Icons.build_outlined),
-      (route: '/list-perdu',        label: 'Perdu',       icon: Icons.warning_amber_outlined),
-      (route: '/emprunt',           label: 'Emprunts',    icon: Icons.person_outline),
+      (route: '/list-tout', label: 'Tout', icon: Icons.apps_rounded),
+      (route: '/list-dispo', label: 'Dispo', icon: Icons.check_circle_outline),
+      (
+        route: '/list-maintenance',
+        label: 'Maintenance',
+        icon: Icons.build_outlined,
+      ),
+      (
+        route: '/list-perdu',
+        label: 'Perdu',
+        icon: Icons.warning_amber_outlined,
+      ),
+      (route: '/list-emprunt', label: 'Emprunter', icon: Icons.person_outline),
     ];
 
     return SizedBox(

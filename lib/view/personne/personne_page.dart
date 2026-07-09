@@ -156,7 +156,7 @@ class PersonnePage extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
-              ref.read(personneProvider.notifier).supprimerPersonne(p.id);
+              ref.read(personneProvider.notifier).supprimerPersonne(p.id!);
               Navigator.pop(ctx);
             },
             child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
@@ -362,7 +362,7 @@ class _AjouterPersonneSheetState extends State<_AjouterPersonneSheet> {
                       if (nom.isEmpty) return;
                       widget.ref
                           .read(personneProvider.notifier)
-                          .ajouterPersonne(Personne(id: 0, name: nom));
+                          .ajouterPersonne(Personne(name: nom));
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(

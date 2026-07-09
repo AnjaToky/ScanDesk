@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:scan_desc/view/dash_board.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,10 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashBoard()),
-        );
+        Navigator.pushReplacementNamed(context, '/dash-board');
       }
     });
   }

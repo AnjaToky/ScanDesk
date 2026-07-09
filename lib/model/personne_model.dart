@@ -1,16 +1,19 @@
 import 'package:scan_desc/DAO/personne_dao.dart';
 
 class Personne {
-  int id;
+  int? id;
   String name;
-  Personne({required this.id, required this.name});
+  Personne({this.id, required this.name});
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'name': name};
+    return {
+      if (id != null) 'id': id,
+      'name': name,
+    };
   }
 
   factory Personne.fromJson(Map<String, dynamic> json) {
-    return Personne(id: json['id'], name: json['name']);
+    return Personne(id: json['id'] as int?, name: json['name']);
   }
 }
 

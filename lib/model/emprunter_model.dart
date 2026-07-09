@@ -72,6 +72,11 @@ class EmpruntDetail {
   }
 
   bool get estRetourne => dateRemise != null;
+
+  /// En retard si une date de retour prévue est dépassée et que l'emprunt
+  /// existe toujours (un emprunt rendu est supprimé de la base, cf. EmpruntNotifier.supprimerEmprunt).
+  bool get estEnRetard =>
+      dateRemise != null && dateRemise!.isBefore(DateTime.now());
 }
 
 class EmprunterModel {

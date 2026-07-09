@@ -106,7 +106,7 @@ class _EmpruntDialogState extends ConsumerState<EmpruntDialog> {
               : () {
                   final emprunt = Emprunter(
                     idInventaire: widget.inventaire.id!,
-                    idPersonne: _personneSelectionnee!.id,
+                    idPersonne: _personneSelectionnee!.id!,
                     dateEmprunt: _dateEmprunt,
                     dateRemise: _dateRemise,
                   );
@@ -114,7 +114,7 @@ class _EmpruntDialogState extends ConsumerState<EmpruntDialog> {
                     id: 0,
                     idInventaire: widget.inventaire.id!,
                     nomInventaire: widget.inventaire.name,
-                    idPersonne: _personneSelectionnee!.id,
+                    idPersonne: _personneSelectionnee!.id!,
                     nomPersonne: _personneSelectionnee!.name,
                     dateEmprunt: _dateEmprunt,
                     dateRemise: _dateRemise,

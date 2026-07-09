@@ -3,8 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:scan_desc/model/emprunter_model.dart';
+import 'package:scan_desc/model/inventaire_model.dart';
 import 'package:scan_desc/view/colors/couleur.dart';
+import 'package:scan_desc/view/emprunt/emprunt_dialog.dart';
 import 'package:scan_desc/view/widget/bottom_bar.dart';
+import 'package:scan_desc/viewModel/emprunt_notifier.dart';
+import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
@@ -70,15 +75,91 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
       data = null;
     }
 
+    final id = data != null ? (data['id'] as num?)?.toInt() : null;
+    final inventaires = ref.read(inventaireProvider).value ?? const [];
+    Inventaire? inventaire;
+    if (id != null) {
+      for (final inv in inventaires) {
+        if (inv.id == id) {
+          inventaire = inv;
+          break;
+        }
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       builder: (_) => _ResultSheet(
-        data: data,
+        inventaire: inventaire,
         rawValue: rawValue,
         onRescan: () {
           Navigator.pop(context);
+          _resumeScan();
+        },
+        onEmprunter: () {
+          Navigator.pop(context);
+          showEmpruntDialog(context, inventaire!);
+          _resumeScan();
+        },
+        onChangerEtat: (etat) async {
+          Navigator.pop(context);
+          await ref
+              .read(inventaireProvider.notifier)
+              .editer(inventaire!.copyWith(etatInventaire: etat));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('${inventaire.name} : état mis à jour')),
+            );
+          }
+          _resumeScan();
+        },
+        onRetourner: () async {
+          Navigator.pop(context);
+          final emprunts = ref.read(empruntProvider).value ?? const [];
+          Emprunter? actif;
+          for (final e in emprunts) {
+            if (e.idInventaire == inventaire!.id) {
+              actif = e;
+              break;
+            }
+          }
+          if (actif != null) {
+            await ref
+                .read(empruntProvider.notifier)
+                .supprimerEmprunt(actif.id!, inventaire!.id!);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${inventaire.name} : retourné')),
+              );
+            }
+          }
+          _resumeScan();
+        },
+        onSupprimer: () async {
+          final confirme = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Supprimer'),
+              content: Text('Supprimer "${inventaire!.name}" ?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Couleur.erreur),
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Supprimer', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          );
+          if (confirme == true) {
+            if (mounted) Navigator.pop(context);
+            await ref.read(inventaireProvider.notifier).supprimer(inventaire!.id!);
+          }
           _resumeScan();
         },
       ),
@@ -355,33 +436,30 @@ class _ControlButton extends StatelessWidget {
 
 // Bottom sheet résultat
 class _ResultSheet extends StatelessWidget {
-  final Map<String, dynamic>? data;
+  final Inventaire? inventaire;
   final String rawValue;
   final VoidCallback onRescan;
+  final VoidCallback onEmprunter;
+  final void Function(EtatInventaire) onChangerEtat;
+  final VoidCallback onRetourner;
+  final VoidCallback onSupprimer;
 
   const _ResultSheet({
-    required this.data,
+    required this.inventaire,
     required this.rawValue,
     required this.onRescan,
+    required this.onEmprunter,
+    required this.onChangerEtat,
+    required this.onRetourner,
+    required this.onSupprimer,
   });
 
-  Color _etatColor(String? etat) {
+  String _etatLabel(EtatInventaire etat) {
     return switch (etat) {
-      'dispo'        => Couleur.succes,
-      'maintenance'  => Couleur.alerte,
-      'perdu'        => Couleur.erreur,
-      'emprunter'    => const Color(0xFF6366F1),
-      _              => Colors.grey,
-    };
-  }
-
-  String _etatLabel(String? etat) {
-    return switch (etat) {
-      'dispo'        => 'Disponible',
-      'maintenance'  => 'Maintenance',
-      'perdu'        => 'Perdu',
-      'emprunter'    => 'Emprunté',
-      _              => etat ?? '-',
+      EtatInventaire.dispo       => 'Disponible',
+      EtatInventaire.maintenance => 'Maintenance',
+      EtatInventaire.perdu       => 'Perdu',
+      EtatInventaire.emprunter   => 'Emprunté',
     };
   }
 
@@ -455,119 +533,77 @@ class _ResultSheet extends StatelessWidget {
           // Contenu
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: data != null
-                ? _buildDataContent(data!)
+            child: inventaire != null
+                ? _buildDataContent(inventaire!)
                 : _buildRawContent(rawValue),
           ),
 
-          // Bouton
+          // Actions
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onRescan,
-                icon: const Icon(Icons.qr_code_scanner, size: 18),
-                label: const Text(
-                  'Scanner a nouveau',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Couleur.primaire,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
+            child: inventaire != null ? _buildActions(inventaire!) : _buildRescanButton(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDataContent(Map<String, dynamic> d) {
-    final etat = d['etat'] as String?;
-    final color = _etatColor(etat);
+  Widget _buildDataContent(Inventaire inv) {
+    final color = Couleur.couleurEtat(inv.etatInventaire);
 
-    return Column(
-      children: [
-        // Carte principale
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-              ),
-            ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${d['name'] ?? '-'}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Couleur.textPrimaire,
-                      ),
-                    ),
+              Expanded(
+                child: Text(
+                  inv.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Couleur.textPrimaire,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _etatLabel(etat),
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              if ((d['description'] as String?)?.isNotEmpty == true) ...[
-                const SizedBox(height: 6),
-                Text(
-                  '${d['description']}',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                 ),
-              ],
-              const Divider(height: 20, color: Color(0xFFF1F5F9)),
-              Row(
-                children: [
-                  _InfoChip(label: 'ID', value: '${d['id'] ?? '-'}'),
-                  const SizedBox(width: 10),
-                  if (d['total'] != null && (d['total'] as int) > 1)
-                    _InfoChip(
-                      label: 'Unite',
-                      value: '${d['unite']} / ${d['total']}',
-                    ),
-                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _etatLabel(inv.etatInventaire),
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                ),
               ),
             ],
           ),
-        ),
-      ],
+          if (inv.description.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              inv.description,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+          ],
+          const Divider(height: 20, color: Color(0xFFF1F5F9)),
+          _InfoChip(label: 'ID', value: '${inv.id}'),
+        ],
+      ),
     );
   }
 
@@ -580,7 +616,147 @@ class _ResultSheet extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: SelectableText(raw, style: const TextStyle(fontSize: 13)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Article introuvable dans la base locale.',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(raw, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRescanButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onRescan,
+        icon: const Icon(Icons.qr_code_scanner, size: 18),
+        label: const Text(
+          'Scanner a nouveau',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Couleur.primaire,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActions(Inventaire inv) {
+    final etat = inv.etatInventaire;
+    final secondaryButtons = <Widget>[];
+
+    void addEtatButton(EtatInventaire cible, String label, IconData icon) {
+      secondaryButtons.add(
+        _ActionButton(
+          label: label,
+          icon: icon,
+          color: Couleur.couleurEtat(cible),
+          onTap: () => onChangerEtat(cible),
+        ),
+      );
+    }
+
+    if (etat == EtatInventaire.emprunter) {
+      secondaryButtons.add(
+        _ActionButton(
+          label: 'Retourner',
+          icon: Icons.assignment_return_outlined,
+          color: Couleur.succes,
+          onTap: onRetourner,
+        ),
+      );
+    } else {
+      if (etat != EtatInventaire.dispo) {
+        addEtatButton(EtatInventaire.dispo, 'Disponible', Icons.check_circle_outline);
+      }
+      if (etat != EtatInventaire.maintenance) {
+        addEtatButton(EtatInventaire.maintenance, 'Maintenance', Icons.build_outlined);
+      }
+      if (etat != EtatInventaire.perdu) {
+        addEtatButton(EtatInventaire.perdu, 'Perdu', Icons.warning_amber_outlined);
+      }
+    }
+
+    return Column(
+      children: [
+        if (etat == EtatInventaire.dispo) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onEmprunter,
+              icon: const Icon(Icons.person_add_alt_1, size: 18),
+              label: const Text(
+                'Emprunter',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Couleur.primaire,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: secondaryButtons,
+        ),
+        const SizedBox(height: 6),
+        TextButton.icon(
+          onPressed: onSupprimer,
+          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+          label: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+        ),
+        TextButton(
+          onPressed: onRescan,
+          child: const Text('Scanner a nouveau'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: color.withValues(alpha: 0.4)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
     );
   }
 }

@@ -8,9 +8,10 @@ class BottomBar {
 
     final items = [
       (route: '/scan-screen', icon: Icons.qr_code_scanner, label: 'Scanner'),
-      (route: '/dash-board',  icon: Icons.home_rounded,    label: 'Accueil'),
-      (route: '/list-tout',   icon: Icons.list_alt_rounded, label: 'Liste'),
-      (route: '/personne',    icon: Icons.people_rounded,   label: 'Personnes'),
+      (route: '/list-tout', icon: Icons.list_alt_rounded, label: 'Liste'),
+      (route: '/dash-board', icon: Icons.home_filled, label: 'Accueil'),
+      (route: '/personne', icon: Icons.people_rounded, label: 'Personnes'),
+      (route: '/emprunt', icon: Icons.wallet, label: 'Emprunt'),
     ];
 
     return Container(
@@ -55,7 +56,9 @@ class BottomBar {
                         ),
                         child: Icon(
                           item.icon,
-                          color: isActive ? Couleur.primaire : const Color(0xFFADB5BD),
+                          color: isActive
+                              ? Couleur.primaire
+                              : const Color(0xFFADB5BD),
                           size: 24,
                         ),
                       ),
@@ -64,8 +67,12 @@ class BottomBar {
                         item.label,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                          color: isActive ? Couleur.primaire : const Color(0xFFADB5BD),
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: isActive
+                              ? Couleur.primaire
+                              : const Color(0xFFADB5BD),
                         ),
                       ),
                     ],

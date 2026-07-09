@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:scan_desc/DAO/inventaire_firestore_dao.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
+import 'package:scan_desc/service/sync_queue_service.dart';
 
 final inventaireModel = Provider<Inventairemodel>((ref) => Inventairemodel());
 
 final _firestoreDao = InventaireFirestoreDao();
+final _syncQueue = SyncQueueService.instance;
 
 class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
   @override
@@ -20,7 +22,18 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
     int insertedId = 0;
     state = await AsyncValue.guard(() async {
       insertedId = await model.ajouterInventaire(inventaire);
-      _firestoreDao.ajouter(inventaire.copyWith(id: insertedId)).ignore();
+      final synced = inventaire.copyWith(id: insertedId);
+      _syncQueue.runOrEnqueue(
+        collection: 'inventaires',
+        docId: insertedId.toString(),
+        operation: 'set',
+        payload: {
+          'name': synced.name,
+          'description': synced.description,
+          'etat': synced.etatInventaire.name,
+        },
+        action: () => _firestoreDao.ajouter(synced),
+      );
       return model.afficherInventaire();
     });
     return insertedId;
@@ -31,7 +44,17 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await model.editeInventaire(inventaire);
-      _firestoreDao.editer(inventaire).ignore();
+      _syncQueue.runOrEnqueue(
+        collection: 'inventaires',
+        docId: inventaire.id.toString(),
+        operation: 'set',
+        payload: {
+          'name': inventaire.name,
+          'description': inventaire.description,
+          'etat': inventaire.etatInventaire.name,
+        },
+        action: () => _firestoreDao.editer(inventaire),
+      );
       return model.afficherInventaire();
     });
   }
@@ -41,7 +64,12 @@ class InventaireNotifier extends AsyncNotifier<List<Inventaire>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await model.supprimerInventaire(id);
-      _firestoreDao.supprimer(id).ignore();
+      _syncQueue.runOrEnqueue(
+        collection: 'inventaires',
+        docId: id.toString(),
+        operation: 'delete',
+        action: () => _firestoreDao.supprimer(id),
+      );
       return model.afficherInventaire();
     });
   }

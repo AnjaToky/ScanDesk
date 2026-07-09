@@ -26,12 +26,12 @@ class Inventaire {
     };
   }
 
-  Inventaire copyWith({int? id}) {
+  Inventaire copyWith({int? id, EtatInventaire? etatInventaire}) {
     return Inventaire(
       id: id ?? this.id,
       name: name,
       description: description,
-      etatInventaire: etatInventaire,
+      etatInventaire: etatInventaire ?? this.etatInventaire,
     );
   }
 

@@ -83,6 +83,8 @@ class ListPerdu extends ConsumerWidget {
                               perdue.name,
                               perdue.description,
                               Couleur.couleurEtat(perdue.etatInventaire),
+                              inventaire: perdue,
+                              ref: ref,
                             );
                           },
                         ),

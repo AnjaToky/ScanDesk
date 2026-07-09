@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scan_desc/model/inventaire_model.dart';
 import 'package:scan_desc/view/colors/couleur.dart';
 import 'package:scan_desc/view/widget/bottom_bar.dart';
+import 'package:scan_desc/viewModel/emprunt_notifier.dart';
 import 'package:scan_desc/viewModel/inventaire_notifier.dart';
 
 String _formatDate(DateTime date) {
@@ -19,19 +20,21 @@ class DashBoard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncInventaire = ref.watch(inventaireProvider);
+    final asyncEmprunts = ref.watch(empruntDetailProvider);
+    final retards = asyncEmprunts.value?.where((e) => e.estEnRetard).length ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: asyncInventaire.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Erreur: $e')),
-        data: (items) => _buildBody(context, items),
+        data: (items) => _buildBody(context, items, retards),
       ),
       bottomNavigationBar: BottomBar.buildBottom(context, ref),
     );
   }
 
-  Widget _buildBody(BuildContext context, List<Inventaire> items) {
+  Widget _buildBody(BuildContext context, List<Inventaire> items, int retards) {
     final total = items.length;
     final dispo = items.where((i) => i.etatInventaire == EtatInventaire.dispo).length;
     final maintenance = items.where((i) => i.etatInventaire == EtatInventaire.maintenance).length;
@@ -150,6 +153,16 @@ class DashBoard extends ConsumerWidget {
                     value: emprunter,
                     icon: Icons.person_outline,
                     color: const Color(0xFF6366F1),
+                  ),
+                ],
+
+                if (retards > 0) ...[
+                  const SizedBox(height: 12),
+                  _StatTileFull(
+                    label: 'Emprunts en retard',
+                    value: retards,
+                    icon: Icons.warning_amber_outlined,
+                    color: Couleur.erreur,
                   ),
                 ],
 
