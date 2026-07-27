@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Regles Firestore de base pour scan_desc.
+//
+// ATTENTION : l'application n'a pas encore d'authentification. Ces regles
+// valident seulement la FORME des documents (champs requis, types, valeurs
+// autorisees) pour eviter d'ecrire n'importe quoi dans la base : elles ne
+// remplacent pas un vrai controle d'acces. Tant qu'aucune authentification
+// n'est branchee, quiconque possede la configuration Firebase de l'app
+// (google-services.json / firebase_options.dart) peut lire et ecrire ces
+// collections. Pour securiser reellement l'acces, ajoutez Firebase Auth puis
+// remplacez les `allow read` et `allow delete` ci-dessous par des
+// verifications de `request.auth != null` (et idealement d'un role).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /inventaires/{id} {
+      allow read: if true;
+      allow delete: if true;
+      allow create, update: if isValidInventaire(request.resource.data);
+    }
+
+    match /personnes/{id} {
+      allow read: if true;
+      allow delete: if true;
+      allow create, update: if isValidPersonne(request.resource.data);
+    }
+
+    match /emprunts/{id} {
+      allow read: if true;
+      allow delete: if true;
+      allow create, update: if isValidEmprunt(request.resource.data);
+    }
+
+    function isValidInventaire(data) {
+      return data.keys().hasAll(['name', 'description', 'etat'])
+        && data.name is string
+        && data.description is string
+        && data.etat in ['dispo', 'maintenance', 'perdu', 'emprunter'];
+    }
+
+    function isValidPersonne(data) {
+      return data.keys().hasAll(['name']) && data.name is string;
+    }
+
+    function isValidEmprunt(data) {
+      return data.keys().hasAll(['id_inventaire', 'nom_inventaire', 'id_personne', 'nom_personne', 'date_emprunt'])
+        && data.id_inventaire is int
+        && data.nom_inventaire is string
+        && data.id_personne is int
+        && data.nom_personne is string
+        && data.date_emprunt is string;
+    }
+  }
+}

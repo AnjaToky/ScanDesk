@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "116422890523",
+    "project_id": "scan-desc-1796e",
+    "storage_bucket": "scan-desc-1796e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116422890523:android:83c73c41110a56ba85d4be",
+        "android_client_info": {
+          "package_name": "com.example.scan_desc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbZAN_Jbb4jzVn1XXtPnRI7sYLQg6HgGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
